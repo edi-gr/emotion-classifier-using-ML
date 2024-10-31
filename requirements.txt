@@ -1,3 +1,10 @@
 Flask
 nltk
 numpy
+pandas
+seaborn
+matplotlib
+wordcloud
+scikit-learn
+keras
+tensorflow
