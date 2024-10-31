@@ -5,18 +5,19 @@ import nltk
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 import numpy as np
+import os  # Import os module
+
 # Download NLTK stopwords
 nltk.download('stopwords')
 stopwords = set(nltk.corpus.stopwords.words('english'))
 
 app = Flask(__name__)
 
-#========================loading the save files==================================================
-lg = pickle.load(open('logistic_regression.pkl','rb'))
-tfidf_vectorizer = pickle.load(open('tfidfvectorizer.pkl','rb'))
-lb = pickle.load(open('label_encoder.pkl','rb'))
+# Load the saved models
+lg = pickle.load(open('logistic_regression.pkl', 'rb'))
+tfidf_vectorizer = pickle.load(open('tfidfvectorizer.pkl', 'rb'))
+lb = pickle.load(open('label_encoder.pkl', 'rb'))
 
-# =========================repeating the same functions==========================================
 def clean_text(text):
     stemmer = PorterStemmer()
     text = re.sub("[^a-zA-Z]", " ", text)
@@ -24,17 +25,15 @@ def clean_text(text):
     text = text.split()
     text = [stemmer.stem(word) for word in text if word not in stopwords]
     return " ".join(text)
+
 def predict_emotion(input_text):
     print(input_text)
     cleaned_text = clean_text(input_text)
     input_vectorized = tfidf_vectorizer.transform([cleaned_text])
-    # Predict emotion
     predicted_label = lg.predict(input_vectorized)[0]
     predicted_emotion = lb.inverse_transform([predicted_label])[0]
-    label =  np.max(lg.predict(input_vectorized))
-
-    return predicted_emotion,label
-
+    label = np.max(lg.predict(input_vectorized))
+    return predicted_emotion, label
 
 @app.route('/', methods=['GET', 'POST'])
 def analyze_emotion():
@@ -43,9 +42,8 @@ def analyze_emotion():
         predicted_emotion, label = predict_emotion(input_text=comment)
         print(label)
         return render_template('index.html', sentiment=label)
-
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
-
+    port = int(os.environ.get('PORT', 8080))  # Use the PORT environment variable
+    app.run(host='0.0.0.0', port=port, debug=True)
